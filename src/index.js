@@ -3,6 +3,11 @@
 // let log = logger('plugin')
 
 module.exports = (ctx) => {
+  const applyCustomPrefix = (prefix, imgUrl) => {
+    if (!prefix) return imgUrl
+    return String(prefix) + String(imgUrl)
+  }
+
   const register = () => {
     ctx.helper.uploader.register('web-uploader', {
       handle,
@@ -18,6 +23,7 @@ module.exports = (ctx) => {
     const url = userConfig.url
     const paramName = userConfig.paramName
     const jsonPath = userConfig.jsonPath
+    const customPrefix = userConfig.customPrefix
     const customHeader = userConfig.customHeader
     const customBody = userConfig.customBody
     try {
@@ -33,7 +39,7 @@ module.exports = (ctx) => {
         delete imgList[i].base64Image
         delete imgList[i].buffer
         if (!jsonPath) {
-          imgList[i]['imgUrl'] = body
+          imgList[i]['imgUrl'] = applyCustomPrefix(customPrefix, body)
         } else {
           body = JSON.parse(body)
           let imgUrl = body
@@ -41,7 +47,7 @@ module.exports = (ctx) => {
             imgUrl = imgUrl[field]
           }
           if (imgUrl) {
-            imgList[i]['imgUrl'] = imgUrl
+            imgList[i]['imgUrl'] = applyCustomPrefix(customPrefix, imgUrl)
           } else {
             ctx.emit('notification', {
               title: '返回解析失败',
@@ -113,6 +119,14 @@ module.exports = (ctx) => {
         required: false,
         message: '图片URL JSON路径(eg: data.url)',
         alias: 'JSON路径'
+      },
+      {
+        name: 'customPrefix',
+        type: 'input',
+        default: userConfig.customPrefix,
+        required: false,
+        message: '自定义域名前缀，接口返回相对路径时拼在前面(eg: https://cdn.example.com)',
+        alias: '域名前缀'
       },
       {
         name: 'customHeader',
